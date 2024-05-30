@@ -44,7 +44,24 @@ public class PlayerSpawnObject : NetworkBehaviour
 
     private void CheckIsLocalPlayerOnUpdate()
     {
+        if (this.isLocalPlayer == false)
+            return;
 
+        // 로컬플레이어의 회전
+        float horizontal = Input.GetAxis("Horizontal");
+        transform.Rotate(0, horizontal * _ratationSpeed * Time.deltaTime, 0);
+
+        // 로컬플레이어의 이동
+        float vetrial = Input.GetAxis("Vertical");
+        Vector3 forward = transform.TransformDirection(Vector3.forward);
+        NavAgent_Player.velocity = forward * Mathf.Max(vetrial, 0) * NavAgent_Player.speed;
+        Animator_Player.SetBool("Moving", NavAgent_Player.velocity != Vector3.zero);
+
+        // 공격
+        if (Input.GetKeyDown(_atkKey))
+        {
+            CommandAtk();
+        }
     }
 
     // 클라에서 서버로 호출은 하지만 로직의 동작은 서버사이드 온리
