@@ -62,25 +62,52 @@ public class PlayerSpawnObject : NetworkBehaviour
         {
             CommandAtk();
         }
+
+        RotateLocalPlayer();
+    }
+
+    private void RotateLocalPlayer()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if(Physics.Raycast(ray, out RaycastHit hit, 100))
+        {
+            Debug.DrawLine(ray.origin, hit.point);
+            Vector3 lookRotate = new Vector3(hit.point.x, Transform_Player.position.y, hit.point.z);
+            Transform_Player.LookAt(lookRotate);
+        }
     }
 
     // 클라에서 서버로 호출은 하지만 로직의 동작은 서버사이드 온리
     [Command]
     private void CommandAtk()
     {
+        GameObject atkObjectForSpawn = Instantiate(Prefab_AtkObject, Tranform_AtkSpawnPos.transform.position, Tranform_AtkSpawnPos.transform.rotation);
+        NetworkServer.Spawn(atkObjectForSpawn);
 
+        RpcOnAtk();
     }
 
     [ClientRpc]
     private void RpcOnAtk()
     {
-
+        Debug.LogWarning($"{this.netId} 가 RPC 옴");
+        Animator_Player.SetTrigger("Atk");
     }
 
     // 클라에서 다음 함수가 실행되지 않도록 ServerCallback을 달아줌
     [ServerCallback]
     private void OnTriggerEnter(Collider other)
     {
+        var atkGenObject = other.GetComponent<>();
+        if (atkGenObject == null)
+            return;
+
+        _health--;
+
+        if(_health == 0)
+        {
+            NetworkServer.Destroy(this.gameObject);
+        }
     }
 
 }
