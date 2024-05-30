@@ -1,18 +1,34 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using Mirror;
 
-public class AtkSpawnObject : MonoBehaviour
+public class AtkSpawnObject : NetworkBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public float _destoryAfter = 10.0f;
+    public float _force = 1000;
+
+    public Rigidbody RigidBody_AtkObject;
+
+    public override void OnStartServer()
     {
-        
+        Invoke(nameof(DestorySelf), _destoryAfter);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        
+        RigidBody_AtkObject.AddForce(this.transform.forward * _force);
     }
+
+    [Server]
+    private void DestorySelf()
+    {
+        NetworkServer.Destroy(this.gameObject);
+    }
+
+    [ServerCallback]
+    private void OnTriggerEnter(Collider other)
+    {
+        DestorySelf();
+    }
+
+
 }
